@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Thời khóa biểu', ~{::#content}, ~{::script})}">
+<head><title>Thời khóa biểu · PTIT</title></head>
+<body>
+<div id="content">
+    <div class="card-x">
+        <div class="card-head">
+            <div>
+                <h2 th:text="'Lịch học tuần · ' + ${hk.TenHK}">Lịch học tuần</h2>
+                <div class="cell-sub" th:if="${!buoi.isEmpty()}" th:text="${soMon} + ' môn · ' + ${buoi.size()} + ' buổi mỗi tuần'"></div>
+            </div>
+            <div class="ms-auto" th:insert="~{fragments :: chonHocKy(${dsHocKy}, ${hk})}"></div>
+        </div>
+
+        <th:block th:if="${buoi.isEmpty()}">
+            <div th:replace="~{fragments :: empty('bi-calendar-x', 'Chưa có lịch học trong học kỳ này', 'Bạn chưa đăng ký lớp học phần nào. Vào mục Đăng ký học phần để chọn lớp, lịch sẽ tự hiện ở đây.')}"></div>
+        </th:block>
+
+        <div th:if="${!buoi.isEmpty()}" class="card-pad">
+            <div class="tkb-scroll">
+                <div class="tkb">
+                    <!-- Hàng tiêu đề -->
+                    <div class="tkb-h" style="grid-row: 1; grid-column: 1"></div>
+                    <div th:each="t : ${#numbers.sequence(2, 8)}" class="tkb-h"
+                         th:style="'grid-row: 1; grid-column: ' + ${t}"
+                         th:text="${t == 8} ? 'Chủ nhật' : 'Thứ ' + ${t}">Thứ 2</div>
+
+                    <!-- Cột tiết + ô nền -->
+                    <th:block th:each="tiet : ${#numbers.sequence(1, 12)}">
+                        <div class="tkb-tiet" th:style="'grid-row: ' + ${tiet + 1} + '; grid-column: 1'"
+                             th:classappend="${tiet == 6} ? 'trua'">
+                            <b th:text="'Tiết ' + ${tiet}">Tiết 1</b>
+                            <span th:text="${tiet <= 6} ? 'Sáng' : 'Chiều'">Sáng</span>
+                        </div>
+                        <div th:each="t : ${#numbers.sequence(2, 8)}" class="tkb-cell"
+                             th:classappend="${tiet == 6} ? 'trua'"
+                             th:style="'grid-row: ' + ${tiet + 1} + '; grid-column: ' + ${t}"></div>
+                    </th:block>
+
+                    <!-- Các buổi học -->
+                    <div th:each="b : ${buoi}" class="tkb-block" th:classappend="'m' + ${b.Mau}"
+                         th:style="'grid-row: ' + ${b.TietBatDau + 1} + ' / span ' + ${b.TietKetThuc - b.TietBatDau + 1} + '; grid-column: ' + ${b.Thu}"
+                         th:title="${b.TenMH} + ' · ' + ${b.MaLHP} + ' · ' + ${b.TenGV}">
+                        <div class="b-name" th:text="${b.TenMH}">Cơ sở dữ liệu</div>
+                        <div class="b-meta"><i class="bi bi-geo-alt"></i> <span th:text="${b.Phong}">A2-301</span></div>
+                        <div class="b-meta" th:text="'Tiết ' + ${b.TietBatDau} + '–' + ${b.TietKetThuc}">Tiết 1-3</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách chi tiết bên dưới -->
+    <div class="card-x mt-3" th:if="${!buoi.isEmpty()}">
+        <div class="card-head"><h2>Chi tiết các buổi học</h2></div>
+        <div class="table-responsive">
+            <table class="table table-x">
+                <thead>
+                <tr><th>Môn học</th><th>Lớp</th><th>Thứ</th><th>Tiết</th><th>Phòng</th><th>Giảng viên</th></tr>
+                </thead>
+                <tbody>
+                <tr th:each="b : ${buoi}">
+                    <td><span class="legend-dot me-2" th:classappend="'m' + ${b.Mau}"></span><span class="fw-semibold" th:text="${b.TenMH}"></span></td>
+                    <td class="mono" th:text="${b.MaLHP}"></td>
+                    <td th:text="${b.Thu == 8} ? 'Chủ nhật' : 'Thứ ' + ${b.Thu}"></td>
+                    <td th:text="${b.TietBatDau} + '–' + ${b.TietKetThuc}"></td>
+                    <td th:text="${b.Phong}"></td>
+                    <td th:text="${b.TenGV}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script></script>
+</body>
+</html>

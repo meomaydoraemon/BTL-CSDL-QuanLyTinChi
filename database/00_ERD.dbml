@@ -1,0 +1,117 @@
+// =====================================================
+// CSDL QUAN LY DANG KY TIN CHI - Ban thiet ke v1.1 (khop voi 01_schema.sql)
+// Dan toan bo noi dung nay vao https://dbdiagram.io de ra so do ERD
+// =====================================================
+
+Table Khoa {
+  MaKhoa varchar(10) [pk]
+  TenKhoa nvarchar(100) [not null, unique]
+}
+
+Table SinhVien {
+  MaSV varchar(12) [pk, note: 'VD: B22DCCN001']
+  HoTen nvarchar(100) [not null]
+  NgaySinh date [not null]
+  GioiTinh nvarchar(3) [not null, note: 'CHECK: Nam/Nu']
+  Email varchar(100) [not null, unique]
+  MaKhoa varchar(10) [not null, ref: > Khoa.MaKhoa]
+  NienKhoa varchar(10) [not null, note: 'VD: 2025-2030']
+}
+
+Table GiangVien {
+  MaGV varchar(10) [pk]
+  HoTen nvarchar(100) [not null]
+  HocVi nvarchar(20) [not null, note: 'ThS, TS, PGS.TS, GS.TS']
+  Email varchar(100) [not null, unique]
+  MaKhoa varchar(10) [not null, ref: > Khoa.MaKhoa]
+}
+
+Table MonHoc {
+  MaMH varchar(10) [pk, note: 'VD: INT1306']
+  TenMH nvarchar(150) [not null]
+  SoTinChi tinyint [not null, note: 'CHECK 1..6']
+  MaKhoa varchar(10) [not null, ref: > Khoa.MaKhoa]
+  TyLeCC tinyint [not null, default: 10, note: '% chuyen can']
+  TyLeGK tinyint [not null, default: 30, note: '% giua ky']
+  TyLeCK tinyint [not null, default: 60, note: '% cuoi ky; CHECK tong = 100']
+}
+
+Table MonTienQuyet {
+  MaMH varchar(10) [ref: > MonHoc.MaMH]
+  MaMHTienQuyet varchar(10) [ref: > MonHoc.MaMH]
+  indexes {
+    (MaMH, MaMHTienQuyet) [pk]
+  }
+  Note: 'CHECK MaMH <> MaMHTienQuyet. Tien quyet co the long nhau -> kiem tra bang CTE de quy'
+}
+
+Table HocKy {
+  MaHK varchar(10) [pk, note: 'VD: 20261 = HK1 nam 2026-2027']
+  TenHK nvarchar(50) [not null]
+  NgayBatDau date [not null]
+  NgayKetThuc date [not null]
+  NgayMoDK datetime [not null, note: 'Thoi gian mo dang ky']
+  NgayDongDK datetime [not null, note: 'CHECK NgayDongDK > NgayMoDK']
+  SoTCToiDa tinyint [not null, default: 25]
+}
+
+Table LopHocPhan {
+  MaLHP varchar(20) [pk, note: 'VD: INT1306-20261-01']
+  MaMH varchar(10) [not null, ref: > MonHoc.MaMH]
+  MaHK varchar(10) [not null, ref: > HocKy.MaHK]
+  MaGV varchar(10) [not null, ref: > GiangVien.MaGV]
+  Nhom tinyint [not null]
+  SiSoToiDa smallint [not null, note: 'CHECK > 0']
+  SiSoHienTai smallint [not null, default: 0, note: 'Trigger cap nhat; CHECK <= SiSoToiDa']
+  indexes {
+    (MaMH, MaHK, Nhom) [unique]
+  }
+}
+
+Table LichHoc {
+  MaLich int [pk, increment]
+  MaLHP varchar(20) [not null, ref: > LopHocPhan.MaLHP]
+  Thu tinyint [not null, note: 'CHECK 2..8 (8 = Chu nhat)']
+  TietBatDau tinyint [not null, note: 'CHECK 1..12']
+  SoTiet tinyint [not null, note: 'CHECK TietBatDau + SoTiet - 1 <= 12']
+  Phong varchar(20) [not null]
+}
+
+Table DangKy {
+  MaSV varchar(12) [ref: > SinhVien.MaSV]
+  MaLHP varchar(20) [ref: > LopHocPhan.MaLHP]
+  NgayDangKy datetime [not null, default: `GETDATE()`]
+  DiemCC decimal(4,2) [null, note: 'CHECK 0..10']
+  DiemGK decimal(4,2) [null]
+  DiemCK decimal(4,2) [null]
+  DiemTK decimal(4,2) [null, note: 'Trigger tu tinh theo ty le cua MonHoc']
+  indexes {
+    (MaSV, MaLHP) [pk]
+  }
+}
+
+Table ThangDiem {
+  DiemChu varchar(2) [pk, note: 'A+, A, B+, B, C+, C, D+, D, F']
+  DiemTu decimal(4,2) [not null]
+  DiemDen decimal(4,2) [not null]
+  DiemHe4 decimal(3,2) [not null]
+  Note: 'Bang tra cuu -> khong luu DiemChu trong DangKy de dat 3NF'
+}
+
+Table TaiKhoan {
+  TenDangNhap varchar(50) [pk]
+  MatKhauHash varchar(100) [not null, note: 'BCrypt']
+  VaiTro varchar(10) [not null, note: 'CHECK: SV / GV / PDT']
+  MaSV varchar(12) [null, ref: - SinhVien.MaSV, note: 'UNIQUE co loc: WHERE MaSV IS NOT NULL']
+  MaGV varchar(10) [null, ref: - GiangVien.MaGV, note: 'UNIQUE co loc: WHERE MaGV IS NOT NULL']
+  Note: 'CHECK: SV thi co MaSV, GV thi co MaGV, PDT thi ca hai NULL'
+}
+
+Table NhatKyDangKy {
+  MaNK bigint [pk, increment]
+  MaSV varchar(12) [not null]
+  MaLHP varchar(20) [not null]
+  HanhDong nvarchar(10) [not null, note: 'DANG_KY / HUY']
+  ThoiGian datetime [not null, default: `GETDATE()`]
+  Note: 'Trigger tren DangKy tu ghi; khong dat FK de giu lich su ca khi du lieu bi xoa'
+}

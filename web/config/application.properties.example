@@ -1,0 +1,21 @@
+# =====================================================================
+#  CẤU HÌNH RIÊNG CỦA TỪNG MÁY
+#  Chỉ cần khi máy bạn KHÁC mặc định (localhost, cổng 1433, instance SQLEXPRESS).
+#  Cách dùng: chép file này thành   web\config\application.properties
+#             (cùng thư mục, bỏ đuôi .example), sửa các dòng cần đổi, bỏ dấu # ở đầu dòng.
+#  File application.properties trong thư mục này KHÔNG được đưa lên git.
+#  Sửa xong: bấm "Dừng Quản lý tín chỉ" rồi mở lại "Quản lý tín chỉ" (không cần build lại).
+# =====================================================================
+
+# Máy chủ và cổng TCP của SQL Server
+#qltc.db.server=localhost
+#qltc.db.port=1433
+
+# Tên instance: SQLEXPRESS (bản Express), MSSQLSERVER (bản Developer/Standard cài mặc định)
+# Dùng để kiểm tra dịch vụ đang chạy và cho nút "Reset dữ liệu demo" (sqlcmd -S .\<instance>)
+#qltc.sql.instance=SQLEXPRESS
+
+# Dùng tài khoản SQL Server (sa...) thay cho Windows Authentication: bỏ # cả 3 dòng
+#spring.datasource.url=jdbc:sqlserver://localhost:1433;databaseName=QuanLyTinChi;encrypt=true;trustServerCertificate=true
+#spring.datasource.username=sa
+#spring.datasource.password=mat_khau_cua_ban

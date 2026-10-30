@@ -1,0 +1,43 @@
+# ---------------------------------------------------------------
+#  File do máy tự tạo ra - mỗi máy chạy CAI_DAT_LAN_DAU.bat để có lại
+# ---------------------------------------------------------------
+
+# Kết quả build Maven (file .jar, class đã biên dịch)
+target/
+*.jar
+# Riêng file jar của Maven Wrapper (nếu sau này dùng bản có jar) vẫn được giữ
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven tải tay về (không cần: đã có Maven Wrapper web\mvnw.cmd)
+tools/
+
+# DLL đăng nhập Windows: Maven tự tải từ Maven Central vào web\lib khi build
+web/lib/
+
+# Log và PID khi chạy ứng dụng
+logs/
+*.log
+*.pid
+
+# Cấu hình riêng của từng máy (instance SQL Server, cổng, mật khẩu sa...)
+# Mẫu để chép: web/config/application.properties.example
+web/config/application.properties
+
+# Shortcut do CAI_DAT_LAN_DAU.bat tạo, chứa đường dẫn riêng của máy
+*.lnk
+
+# IDE / editor
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.claude/
+*.swp
+
+# Hệ điều hành
+Thumbs.db
+desktop.ini
+.DS_Store

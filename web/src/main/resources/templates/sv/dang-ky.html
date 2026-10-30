@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Đăng ký học phần', ~{::#content}, ~{::script})}">
+<head><title>Đăng ký học phần · PTIT</title></head>
+<body>
+<div id="content">
+
+    <!-- Tóm tắt: học kỳ, thời gian đăng ký, tiến độ tín chỉ -->
+    <div class="row g-3 mb-3" data-refresh="tom-tat">
+        <div class="col-lg-7">
+            <div class="card-x card-pad h-100">
+                <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+                    <div>
+                        <div class="text-muted-x small mb-1">Học kỳ đăng ký</div>
+                        <div class="fs-5 fw-bold" th:text="${hk.TenHK}">HK2 2026-2027</div>
+                        <div class="small mt-1">
+                            <span th:if="${hk.DangMo}" class="tag tag-ok">Đang mở đăng ký</span>
+                            <span th:unless="${hk.DangMo}" class="tag tag-gray">Ngoài thời gian đăng ký</span>
+                            <span class="text-muted-x ms-1"
+                                  th:text="${#temporals.format(hk.NgayMoDK.toLocalDateTime(), 'dd/MM/yyyy HH:mm')} + ' – ' + ${#temporals.format(hk.NgayDongDK.toLocalDateTime(), 'dd/MM/yyyy HH:mm')}"></span>
+                        </div>
+                    </div>
+                    <div th:replace="~{fragments :: chonHocKy(${dsHocKy}, ${hk})}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card-x card-pad h-100">
+                <div class="d-flex justify-content-between align-items-end mb-2">
+                    <div>
+                        <div class="text-muted-x small mb-1">Tín chỉ đã đăng ký</div>
+                        <div class="fw-semibold">
+                            Đã đăng ký <span class="fs-4 fw-bold" style="color: var(--ptit)" th:text="${tcDaDangKy}">0</span>/<span th:text="${tcToiDa}">25</span> tín chỉ
+                        </div>
+                    </div>
+                    <div class="text-muted-x small text-end"><span th:text="${soLopDaDangKy}">0</span> lớp</div>
+                </div>
+                <div class="progress" role="progressbar" aria-label="Tiến độ tín chỉ"
+                     th:aria-valuenow="${tcDaDangKy}" aria-valuemin="0" th:aria-valuemax="${tcToiDa}">
+                    <div class="progress-bar" th:style="'width:' + ${phanTram} + '%'"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-x">
+        <div class="card-head">
+            <h2>Danh sách lớp học phần</h2>
+            <div class="ms-lg-auto flex-grow-1" style="max-width: 360px; min-width: 220px">
+                <div class="search-box">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="timKiem" class="form-control form-control-sm" placeholder="Tìm theo mã hoặc tên môn..." aria-label="Tìm môn học">
+                </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 w-100" id="boLoc">
+                <button type="button" class="chip active" data-loc="">Tất cả</button>
+                <button type="button" class="chip" data-loc="DUOC"><span class="text-success">●</span> Đăng ký được</button>
+                <button type="button" class="chip" data-loc="DA_DK"><span class="text-primary">●</span> Đã đăng ký</button>
+                <button type="button" class="chip" data-loc="CAM"><span style="color: var(--warn)">●</span> Vướng điều kiện</button>
+                <button type="button" class="chip" data-loc="XAM"><span class="text-secondary">●</span> Đã đầy / không cần</button>
+            </div>
+        </div>
+
+        <div data-refresh="bang-lop">
+            <div class="table-responsive" th:if="${!lop.isEmpty()}">
+                <table class="table table-x table-stack" id="bangLop">
+                    <thead>
+                    <tr>
+                        <th>Môn học / Lớp</th>
+                        <th>Giảng viên</th>
+                        <th>Lịch học</th>
+                        <th class="text-center">Sĩ số</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${lop}" th:attr="data-trang-thai=${r.TrangThai},data-tim=${#strings.toLowerCase(r.MaMH + ' ' + r.TenMH + ' ' + r.MaLHP)}">
+                        <td style="min-width: 190px">
+                            <div class="fw-semibold" th:text="${r.TenMH}">Cơ sở dữ liệu</div>
+                            <div class="cell-sub text-nowrap"><span class="mono" th:text="${r.MaLHP}">INT1313-20262-01</span>
+                                · <span th:text="${r.SoTinChi} + ' TC'">3 TC</span></div>
+                        </td>
+                        <td class="text-nowrap st-full order-2 small-md"><i class="bi bi-person text-muted-x d-md-none me-1"></i><span th:text="${r.TenGV}">GV</span></td>
+                        <td class="small st-full order-3" style="min-width: 150px">
+                            <div class="text-nowrap" th:each="buoi : ${r.LichHoc != null ? r.LichHoc.split('; ') : {}}" th:text="${#strings.replace(#strings.replace(buoi, ', phòng ', ' · '), ', tiết ', ' · tiết ')}"></div>
+                            <span th:if="${r.LichHoc == null}" class="text-muted-x">Chưa xếp lịch</span>
+                        </td>
+                        <td class="text-center text-nowrap st-right order-1">
+                            <i class="bi bi-people text-muted-x d-md-none me-1"></i><span class="fw-semibold" th:text="${r.SiSoHienTai}">0</span><span class="text-muted-x" th:text="'/' + ${r.SiSoToiDa}">/60</span>
+                        </td>
+                        <td class="order-4">
+                            <span th:switch="${r.TrangThai}">
+                                <span th:case="'DA_DK'" class="tag tag-info">Đã đăng ký</span>
+                                <span th:case="'DUOC'" class="tag tag-ok">Đăng ký được</span>
+                                <span th:case="'XAM'" class="tag tag-gray" th:text="${r.LyDoKhongTheDangKy}">Lớp đã đầy</span>
+                                <span th:case="*" class="tag tag-warn" th:text="${r.LyDoKhongTheDangKy}">Trùng lịch</span>
+                            </span>
+                        </td>
+                        <td class="text-end text-nowrap st-right order-5">
+                            <button th:if="${r.TrangThai == 'DA_DK'}" type="button" class="btn btn-sm btn-danger-soft js-huy"
+                                    th:attr="data-lhp=${r.MaLHP}"><i class="bi bi-x-lg me-1"></i>Hủy</button>
+                            <button th:if="${r.TrangThai == 'DUOC'}" type="button" class="btn btn-sm btn-primary js-dk"
+                                    th:attr="data-lhp=${r.MaLHP}"><i class="bi bi-plus-lg me-1"></i>Đăng ký</button>
+                            <button th:if="${r.TrangThai == 'CAM' or r.TrangThai == 'XAM'}" type="button"
+                                    class="btn btn-sm btn-soft js-dk" th:attr="data-lhp=${r.MaLHP}"
+                                    title="Hệ thống sẽ kiểm tra lại và báo lý do">Đăng ký</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <th:block th:if="${lop.isEmpty()}">
+                <div th:replace="~{fragments :: empty('bi-journal-x', 'Học kỳ này chưa mở lớp nào', 'Phòng đào tạo chưa mở lớp học phần cho học kỳ đã chọn. Hãy chọn học kỳ khác hoặc quay lại sau.')}"></div>
+            </th:block>
+        </div>
+        <div class="d-none" data-khong-khop>
+            <div th:replace="~{fragments :: empty('bi-search', 'Không tìm thấy lớp phù hợp', 'Thử từ khóa khác (VD: INT1313 hoặc cơ sở dữ liệu) hoặc chọn bộ lọc Tất cả.')}"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        let loc = '';
+        const khongDau = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+
+        function locBang() {
+            const q = khongDau(document.getElementById('timKiem').value.trim().toLowerCase());
+            let hien = 0;
+            document.querySelectorAll('#bangLop tbody tr').forEach(tr => {
+                const ok = (!q || khongDau(tr.dataset.tim).includes(q)) && (!loc || tr.dataset.trangThai === loc);
+                tr.classList.toggle('d-none', !ok);
+                if (ok) hien++;
+            });
+            const bang = document.getElementById('bangLop');
+            if (bang) {
+                document.querySelectorAll('[data-khong-khop]').forEach(e => e.classList.toggle('d-none', hien > 0));
+                bang.closest('.table-responsive').classList.toggle('d-none', hien === 0);
+            }
+        }
+
+        document.getElementById('timKiem').addEventListener('input', locBang);
+        document.getElementById('boLoc').addEventListener('click', e => {
+            const b = e.target.closest('.chip');
+            if (!b) return;
+            document.querySelectorAll('#boLoc .chip').forEach(c => c.classList.toggle('active', c === b));
+            loc = b.dataset.loc;
+            locBang();
+        });
+        document.addEventListener('regions-refreshed', locBang);
+
+        document.addEventListener('click', async e => {
+            const btn = e.target.closest('.js-dk, .js-huy');
+            if (!btn) return;
+            const huy = btn.classList.contains('js-huy');
+            if (huy && !confirm('Hủy đăng ký lớp ' + btn.dataset.lhp + '?')) return;
+            btn.disabled = true;
+            const kq = await postForm(huy ? 'huy' : 'dang-ky', { maLHP: btn.dataset.lhp });
+            toast(kq.ok, kq.message);
+            if (kq.ok) await refreshRegions(); else btn.disabled = false;
+        });
+    })();
+</script>
+</body>
+</html>

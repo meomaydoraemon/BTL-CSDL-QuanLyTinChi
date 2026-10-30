@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:fragment="layout(title, heading, content, scripts)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <title th:replace="${title}">Quản lý tín chỉ</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Sidebar: cố định trên máy tính, thu thành offcanvas trên điện thoại -->
+<aside class="app-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebar" aria-label="Menu chính">
+    <div class="offcanvas-body">
+        <div class="d-flex align-items-center">
+            <a class="brand" th:href="@{/}">
+                <span class="brand-logo">PTIT</span>
+                <span>
+                    <span class="brand-name d-block">Đăng ký tín chỉ</span>
+                    <span class="brand-sub">Học viện CN Bưu chính Viễn thông</span>
+                </span>
+            </a>
+            <button type="button" class="btn-close d-lg-none ms-auto me-3" data-bs-dismiss="offcanvas"
+                    data-bs-target="#sidebar" aria-label="Đóng menu"></button>
+        </div>
+
+        <th:block th:if="${me.vaiTro == 'SV'}">
+            <div class="nav-section">Học tập</div>
+            <ul class="side-nav">
+                <li><a th:href="@{/sv/dang-ky}" th:classappend="${menu == 'dang-ky'} ? 'active'">
+                    <i class="bi bi-journal-plus"></i>Đăng ký học phần</a></li>
+                <li><a th:href="@{/sv/thoi-khoa-bieu}" th:classappend="${menu == 'tkb'} ? 'active'">
+                    <i class="bi bi-calendar3-week"></i>Thời khóa biểu</a></li>
+                <li><a th:href="@{/sv/bang-diem}" th:classappend="${menu == 'bang-diem'} ? 'active'">
+                    <i class="bi bi-mortarboard"></i>Bảng điểm</a></li>
+            </ul>
+        </th:block>
+
+        <th:block th:if="${me.vaiTro == 'GV'}">
+            <div class="nav-section">Giảng dạy</div>
+            <ul class="side-nav">
+                <li><a th:href="@{/gv/lop}" th:classappend="${menu == 'gv-lop'} ? 'active'">
+                    <i class="bi bi-easel2"></i>Lớp &amp; nhập điểm</a></li>
+            </ul>
+        </th:block>
+
+        <th:block th:if="${me.vaiTro == 'PDT'}">
+            <div class="nav-section">Quản trị</div>
+            <ul class="side-nav">
+                <li><a th:href="@{/pdt/dashboard}" th:classappend="${menu == 'dashboard'} ? 'active'">
+                    <i class="bi bi-grid-1x2"></i>Tổng quan</a></li>
+                <li><a th:href="@{/pdt/lop}" th:classappend="${menu == 'pdt-lop'} ? 'active'">
+                    <i class="bi bi-collection"></i>Lớp học phần</a></li>
+                <li><a th:href="@{/pdt/hoc-ky}" th:classappend="${menu == 'pdt-hk'} ? 'active'">
+                    <i class="bi bi-calendar-range"></i>Học kỳ &amp; thời gian ĐK</a></li>
+            </ul>
+        </th:block>
+
+        <div class="sidebar-foot">© 2026 · Bài tập lớn Cơ sở dữ liệu</div>
+    </div>
+</aside>
+
+<div class="app-main">
+    <header class="topbar">
+        <button class="btn btn-soft d-lg-none px-2 py-1" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#sidebar" aria-controls="sidebar" aria-label="Mở menu">
+            <i class="bi bi-list fs-5"></i>
+        </button>
+        <h1 class="topbar-title text-truncate" th:text="${heading}">Trang</h1>
+        <th:block th:with="dsSql=${@sqlInfo.cho(trang ?: menu)}">
+            <button th:if="${!dsSql.isEmpty()}" type="button" class="btn-sql" data-bs-toggle="modal" data-bs-target="#modalSql"
+                    title="Các thủ tục, view, hàm, trigger trang này dùng">
+                <i class="bi bi-code-slash"></i><span class="d-none d-sm-inline">Xem SQL</span>
+            </button>
+        </th:block>
+        <div class="user-chip">
+            <div class="avatar" th:text="${me.chuCaiDau}">A</div>
+            <div class="d-none d-sm-block">
+                <div class="user-name" th:text="${me.hoTen}">Họ tên</div>
+                <div class="user-role">
+                    <span th:text="${me.tenVaiTro}">Vai trò</span>
+                    <span th:if="${me.maSV != null}" th:text="'· ' + ${me.maSV}"></span>
+                    <span th:if="${me.maGV != null}" th:text="'· ' + ${me.maGV}"></span>
+                </div>
+            </div>
+            <form th:action="@{/logout}" method="post" class="ms-1">
+                <button class="btn btn-soft px-2 py-1" type="submit" title="Đăng xuất" aria-label="Đăng xuất">
+                    <i class="bi bi-box-arrow-right fs-5"></i>
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <main class="page">
+        <div th:replace="${content}"></div>
+    </main>
+</div>
+
+<!-- Đặt ngoài .topbar: backdrop-filter của topbar làm modal (position: fixed) bị lệch -->
+<div th:replace="~{fragments :: sqlModal(${@sqlInfo.cho(trang ?: menu)}, ${heading})}"></div>
+
+<div class="toast-wrap"></div>
+<div class="d-none" th:if="${toastOk}" data-toast="ok" th:text="${toastOk}"></div>
+<div class="d-none" th:if="${toastLoi}" data-toast="loi" th:text="${toastLoi}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+<th:block th:replace="${scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Nhập điểm', ~{::#content}, ~{::script})}">
+<head><title>Nhập điểm · PTIT</title></head>
+<body>
+<div id="content">
+    <a th:href="@{/gv/lop(hk=${lop.MaHK})}" class="text-decoration-none small d-inline-flex align-items-center gap-1 mb-3">
+        <i class="bi bi-arrow-left"></i>Danh sách lớp
+    </a>
+
+    <div class="card-x card-pad mb-3">
+        <div class="d-flex flex-wrap gap-3 justify-content-between align-items-start">
+            <div>
+                <div class="fs-5 fw-bold" th:text="${lop.TenMH}">Cơ sở dữ liệu</div>
+                <div class="text-muted-x small mt-1">
+                    <span class="mono" th:text="${lop.MaLHP}"></span> · <span th:text="${lop.TenHK}"></span>
+                    · <span th:text="${lop.LichHoc} ?: 'Chưa xếp lịch'"></span>
+                </div>
+            </div>
+            <div class="d-flex gap-2 flex-wrap">
+                <span class="tag tag-info no-dot" th:text="'Tỷ lệ: CC ' + ${lop.TyLeCC} + '% · GK ' + ${lop.TyLeGK} + '% · CK ' + ${lop.TyLeCK} + '%'"></span>
+                <span class="tag tag-gray no-dot" th:text="${soCoDiem} + '/' + ${sv.size()} + ' đã có điểm'"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-x">
+        <div class="card-head">
+            <h2>Danh sách sinh viên</h2>
+            <span class="cell-sub ms-auto">Nhập điểm thang 10, bấm <b>Lưu</b> từng dòng. Điểm tổng kết do hệ thống tự tính.</span>
+        </div>
+
+        <th:block th:if="${sv.isEmpty()}">
+            <div th:replace="~{fragments :: empty('bi-people', 'Lớp chưa có sinh viên', 'Khi sinh viên đăng ký vào lớp này, danh sách sẽ hiện ở đây để bạn nhập điểm.')}"></div>
+        </th:block>
+
+        <div class="table-responsive" th:if="${!sv.isEmpty()}">
+            <table class="table table-x">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Sinh viên</th>
+                    <th class="text-center">Chuyên cần</th>
+                    <th class="text-center">Giữa kỳ</th>
+                    <th class="text-center">Cuối kỳ</th>
+                    <th class="text-center">Tổng kết</th>
+                    <th class="text-center">Điểm chữ</th>
+                    <th class="text-end"></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="s, st : ${sv}" th:attr="data-sv=${s.MaSV}">
+                    <td class="text-muted-x" th:text="${st.count}">1</td>
+                    <td>
+                        <div class="fw-semibold" th:text="${s.HoTen}">Họ tên</div>
+                        <div class="cell-sub mono" th:text="${s.MaSV}">Mã SV</div>
+                    </td>
+                    <td class="text-center"><input type="number" step="0.1" min="0" max="10" class="form-control diem-input mx-auto" name="cc"
+                                                   th:value="${s.DiemCC}" aria-label="Điểm chuyên cần"></td>
+                    <td class="text-center"><input type="number" step="0.1" min="0" max="10" class="form-control diem-input mx-auto" name="gk"
+                                                   th:value="${s.DiemGK}" aria-label="Điểm giữa kỳ"></td>
+                    <td class="text-center"><input type="number" step="0.1" min="0" max="10" class="form-control diem-input mx-auto" name="ck"
+                                                   th:value="${s.DiemCK}" aria-label="Điểm cuối kỳ"></td>
+                    <td class="text-center fw-bold js-tk" th:text="${s.DiemTK != null} ? ${#numbers.formatDecimal(s.DiemTK, 1, 1, 'POINT')} : '—'">—</td>
+                    <td class="text-center js-chu"><span th:replace="~{fragments :: grade(${s.DiemChu})}"></span></td>
+                    <td class="text-end"><button type="button" class="btn btn-sm btn-primary js-luu">Lưu</button></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('click', async e => {
+        const btn = e.target.closest('.js-luu');
+        if (!btn) return;
+        const tr = btn.closest('tr');
+        const v = n => tr.querySelector('[name=' + n + ']').value.trim();
+        btn.disabled = true;
+        const kq = await postForm(location.pathname + '/diem', { maSV: tr.dataset.sv, cc: v('cc'), gk: v('gk'), ck: v('ck') });
+        btn.disabled = false;
+        toast(kq.ok, kq.message);
+        if (!kq.ok) return;
+        tr.querySelector('.js-tk').textContent = kq.diemTK != null ? Number(kq.diemTK).toFixed(1) : '—';
+        const chu = kq.diemChu;
+        tr.querySelector('.js-chu').innerHTML = '<span class="grade ' + (chu ? 'grade-' + chu[0] : 'grade-none') + '"></span>';
+        tr.querySelector('.js-chu .grade').textContent = chu || '—';
+        tr.classList.remove('row-saved'); void tr.offsetWidth; tr.classList.add('row-saved');
+    });
+</script>
+</body>
+</html>

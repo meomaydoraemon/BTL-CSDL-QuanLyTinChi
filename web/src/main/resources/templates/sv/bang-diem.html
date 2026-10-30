@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Bảng điểm', ~{::#content}, ~{::script})}">
+<head><title>Bảng điểm · PTIT</title></head>
+<body>
+<div id="content">
+
+    <div th:if="${dsHK.isEmpty()}" class="card-x"
+         th:insert="~{fragments :: empty('bi-mortarboard', 'Chưa có kết quả học tập', 'Bạn chưa học học phần nào. Điểm sẽ hiện ở đây sau khi giảng viên nhập điểm.')}"></div>
+
+    <th:block th:if="${!dsHK.isEmpty()}">
+        <!-- GPA nổi bật ở đầu trang -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-5 col-xl-4">
+                <div class="gpa-hero">
+                    <div class="gpa-label mb-2">GPA tích lũy (hệ 4)</div>
+                    <div class="d-flex align-items-end gap-3">
+                        <div class="gpa-num" th:text="${tichLuy.GPATichLuy != null} ? ${#numbers.formatDecimal(tichLuy.GPATichLuy, 1, 2, 'POINT')} : '—'">3.45</div>
+                        <span class="badge-xl mb-1" th:text="${tichLuy.XepLoai}">Giỏi</span>
+                    </div>
+                    <div class="gpa-label mt-3" th:if="${hang != null}"
+                         th:text="'Xếp hạng ' + ${hang.HangTrongKhoaHoc} + '/' + ${hang.TongSo} + ' trong khóa'">Xếp hạng</div>
+                </div>
+            </div>
+            <div class="col-md-7 col-xl-8">
+                <div class="row g-3 h-100">
+                    <div class="col-sm-4">
+                        <div class="card-x stat">
+                            <div class="stat-icon i-green"><i class="bi bi-check2-circle"></i></div>
+                            <div>
+                                <div class="stat-label">Tín chỉ tích lũy</div>
+                                <div class="stat-value" th:text="${tichLuy.SoTCTichLuy}">60</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="card-x stat">
+                            <div class="stat-icon i-blue"><i class="bi bi-calendar3"></i></div>
+                            <div>
+                                <div class="stat-label">Số học kỳ đã học</div>
+                                <div class="stat-value" th:text="${dsHK.size()}">4</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="card-x stat">
+                            <div class="stat-icon" th:classappend="${soMonNo > 0} ? 'i-red' : 'i-green'"><i class="bi bi-exclamation-triangle"></i></div>
+                            <div>
+                                <div class="stat-label">Môn còn nợ</div>
+                                <div class="stat-value" th:text="${soMonNo}">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Từng học kỳ -->
+        <div class="card-x mb-3" th:each="h : ${dsHK}">
+            <div class="card-head">
+                <h2 th:text="${h.TenHK}">HK1 2024-2025</h2>
+                <div class="ms-auto d-flex gap-2 flex-wrap">
+                    <span class="tag tag-gray no-dot" th:text="${h.SoTC} + ' tín chỉ'">15 TC</span>
+                    <span class="tag tag-info no-dot" th:if="${h.GPA != null}" th:text="'GPA kỳ: ' + ${#numbers.formatDecimal(h.GPA, 1, 2, 'POINT')}">GPA 3.2</span>
+                    <span class="tag tag-gray no-dot" th:if="${h.GPA == null}">Chưa có điểm</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-x">
+                    <thead>
+                    <tr>
+                        <th>Môn học</th>
+                        <th class="text-center">TC</th>
+                        <th class="text-center">Chuyên cần</th>
+                        <th class="text-center">Giữa kỳ</th>
+                        <th class="text-center">Cuối kỳ</th>
+                        <th class="text-center">Tổng kết</th>
+                        <th class="text-center">Điểm chữ</th>
+                        <th>Kết quả</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m : ${h.Mon}">
+                        <td>
+                            <div class="fw-semibold" th:text="${m.TenMH}">Môn</div>
+                            <div class="cell-sub mono" th:text="${m.MaLHP}">Mã</div>
+                        </td>
+                        <td class="text-center" th:text="${m.SoTinChi}">3</td>
+                        <td class="text-center" th:text="${m.DiemCC != null} ? ${#numbers.formatDecimal(m.DiemCC, 1, 1, 'POINT')} : '—'">9</td>
+                        <td class="text-center" th:text="${m.DiemGK != null} ? ${#numbers.formatDecimal(m.DiemGK, 1, 1, 'POINT')} : '—'">8</td>
+                        <td class="text-center" th:text="${m.DiemCK != null} ? ${#numbers.formatDecimal(m.DiemCK, 1, 1, 'POINT')} : '—'">7</td>
+                        <td class="text-center fw-bold" th:text="${m.DiemTK != null} ? ${#numbers.formatDecimal(m.DiemTK, 1, 1, 'POINT')} : '—'">7.5</td>
+                        <td class="text-center"><span th:replace="~{fragments :: grade(${m.DiemChu})}"></span></td>
+                        <td>
+                            <span th:switch="${m.KetQua}">
+                                <span th:case="'Đạt'" class="tag tag-ok">Đạt</span>
+                                <span th:case="'Không đạt'" class="tag tag-bad">Không đạt</span>
+                                <span th:case="*" class="tag tag-gray">Chưa có điểm</span>
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </th:block>
+</div>
+<script></script>
+</body>
+</html>

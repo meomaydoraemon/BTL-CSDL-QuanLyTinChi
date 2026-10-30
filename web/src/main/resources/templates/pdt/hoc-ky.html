@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Học kỳ & thời gian đăng ký', ~{::#content}, ~{::script})}">
+<head><title>Học kỳ · PTIT</title></head>
+<body>
+<div id="content">
+    <div class="card-x">
+        <div class="card-head">
+            <h2>Các học kỳ</h2>
+            <span class="cell-sub ms-auto">Đổi thời gian mở / đóng đăng ký bằng thủ tục sp_CapNhatThoiGianDangKy</span>
+        </div>
+
+        <th:block th:if="${dsHocKy.isEmpty()}">
+            <div th:replace="~{fragments :: empty('bi-calendar-range', 'Chưa có học kỳ', 'Thêm học kỳ vào bảng HocKy để bắt đầu mở đăng ký.')}"></div>
+        </th:block>
+
+        <div class="table-responsive" th:if="${!dsHocKy.isEmpty()}">
+            <table class="table table-x">
+                <thead>
+                <tr>
+                    <th>Học kỳ</th>
+                    <th>Trạng thái</th>
+                    <th>Mở đăng ký</th>
+                    <th>Đóng đăng ký</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="h : ${dsHocKy}">
+                    <td>
+                        <div class="fw-semibold text-nowrap" th:text="${h.TenHK}"></div>
+                        <div class="cell-sub"><span class="mono" th:text="${h.MaHK}"></span> · học từ
+                            <span th:text="${#temporals.format(h.NgayBatDau.toLocalDate(), 'dd/MM/yyyy')} + ' đến ' + ${#temporals.format(h.NgayKetThuc.toLocalDate(), 'dd/MM/yyyy')}"></span>
+                            · tối đa <span th:text="${h.SoTCToiDa}"></span> TC</div>
+                    </td>
+                    <td>
+                        <span th:if="${h.DangMo}" class="tag tag-ok">Đang mở ĐK</span>
+                        <span th:unless="${h.DangMo}" class="tag tag-gray">Đóng</span>
+                    </td>
+                    <!-- Mỗi ô ngày nằm đúng cột, gắn vào form ở cột cuối qua thuộc tính form="..." -->
+                    <td>
+                        <input type="datetime-local" name="moDK" class="form-control form-control-sm" style="width: 228px" required
+                               th:attr="form='f-' + ${h.MaHK}"
+                               th:value="${#temporals.format(h.NgayMoDK.toLocalDateTime(), 'yyyy-MM-dd''T''HH:mm')}" aria-label="Thời gian mở đăng ký">
+                    </td>
+                    <td>
+                        <input type="datetime-local" name="dongDK" class="form-control form-control-sm" style="width: 228px" required
+                               th:attr="form='f-' + ${h.MaHK}"
+                               th:value="${#temporals.format(h.NgayDongDK.toLocalDateTime(), 'yyyy-MM-dd''T''HH:mm')}" aria-label="Thời gian đóng đăng ký">
+                    </td>
+                    <td class="text-end">
+                        <form th:action="@{/pdt/hoc-ky}" method="post" th:id="'f-' + ${h.MaHK}">
+                            <input type="hidden" name="maHK" th:value="${h.MaHK}">
+                            <button class="btn btn-sm btn-outline-ptit text-nowrap" type="submit"><i class="bi bi-check2 me-1"></i>Lưu</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script></script>
+</body>
+</html>

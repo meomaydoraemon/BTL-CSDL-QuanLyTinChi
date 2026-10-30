@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Lớp giảng dạy', ~{::#content}, ~{::script})}">
+<head><title>Lớp giảng dạy · PTIT</title></head>
+<body>
+<div id="content">
+    <div class="card-x">
+        <div class="card-head">
+            <h2 th:text="'Lớp phụ trách · ' + ${hk.TenHK}">Lớp phụ trách</h2>
+            <div class="ms-auto" th:insert="~{fragments :: chonHocKy(${dsHocKy}, ${hk})}"></div>
+        </div>
+
+        <th:block th:if="${lop.isEmpty()}">
+            <div th:replace="~{fragments :: empty('bi-easel2', 'Bạn không có lớp nào trong học kỳ này', 'Hãy chọn học kỳ khác ở ô phía trên. Lớp do phòng đào tạo phân công sẽ hiện ở đây.')}"></div>
+        </th:block>
+
+        <div class="table-responsive" th:if="${!lop.isEmpty()}">
+            <table class="table table-x">
+                <thead>
+                <tr>
+                    <th>Môn học</th>
+                    <th>Lớp</th>
+                    <th>Lịch học</th>
+                    <th class="text-center">Sĩ số</th>
+                    <th style="min-width: 170px">Tiến độ nhập điểm</th>
+                    <th class="text-center">Điểm TB</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="r : ${lop}">
+                    <td>
+                        <div class="fw-semibold" th:text="${r.TenMH}">Môn</div>
+                        <div class="cell-sub mono" th:text="${r.MaMH}">Mã</div>
+                    </td>
+                    <td class="mono" th:text="${r.MaLHP}">Lớp</td>
+                    <td class="small">
+                        <div class="text-nowrap" th:each="buoi : ${r.LichHoc != null ? r.LichHoc.split('; ') : {}}" th:text="${#strings.replace(#strings.replace(buoi, ', phòng ', ' · '), ', tiết ', ' · tiết ')}"></div>
+                        <span th:if="${r.LichHoc == null}" class="text-muted-x">Chưa xếp lịch</span>
+                    </td>
+                    <td class="text-center" th:text="${r.SoSinhVien} + '/' + ${r.SiSoToiDa}">40/60</td>
+                    <td>
+                        <th:block th:with="pt=${r.SoSinhVien == 0 ? 0 : r.SoCoDiem * 100 / r.SoSinhVien}">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span th:text="${r.SoCoDiem} + '/' + ${r.SoSinhVien} + ' SV'"></span>
+                                <span th:if="${pt == 100}" class="text-success fw-semibold">Xong</span>
+                                <span th:if="${pt < 100}" class="text-muted-x" th:text="${pt} + '%'"></span>
+                            </div>
+                            <div class="progress" style="height: 6px">
+                                <div class="progress-bar" th:style="'width:' + ${pt} + '%'"
+                                     th:classappend="${pt == 100} ? 'bg-success'"></div>
+                            </div>
+                        </th:block>
+                    </td>
+                    <td class="text-center fw-semibold" th:text="${r.DiemTrungBinh != null} ? ${#numbers.formatDecimal(r.DiemTrungBinh, 1, 2, 'POINT')} : '—'">7.2</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-ptit text-nowrap" th:href="@{/gv/lop/{m}(m=${r.MaLHP})}">
+                            <i class="bi bi-pencil-square me-1"></i>Nhập điểm</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script></script>
+</body>
+</html>

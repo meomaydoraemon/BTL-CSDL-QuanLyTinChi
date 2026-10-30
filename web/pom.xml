@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.5</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>vn.ptit</groupId>
+    <artifactId>quanlytinchi-web</artifactId>
+    <version>1.0.0</version>
+    <name>QuanLyTinChi Web</name>
+    <description>Giao diện web hệ thống quản lý đăng ký tín chỉ</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- DLL đăng nhập Windows phải cùng phiên bản với driver JDBC -->
+        <mssql-jdbc.version>12.8.1.jre11</mssql-jdbc.version>
+        <mssql-jdbc-auth.version>12.8.1.x64</mssql-jdbc-auth.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf.extras</groupId>
+            <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-jdbc</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- Tên cố định để script khởi động tìm được: target\quanlytinchi-web.jar -->
+        <finalName>quanlytinchi-web</finalName>
+        <plugins>
+            <!-- Tự tải DLL đăng nhập Windows Authentication từ Maven Central vào web\lib
+                 ở mỗi lần build (DLL không đưa lên git). Maven kiểm tra checksum khi tải. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>tai-dll-dang-nhap-windows</id>
+                        <phase>generate-resources</phase>
+                        <goals><goal>copy</goal></goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.microsoft.sqlserver</groupId>
+                                    <artifactId>mssql-jdbc_auth</artifactId>
+                                    <version>${mssql-jdbc-auth.version}</version>
+                                    <type>dll</type>
+                                </artifactItem>
+                            </artifactItems>
+                            <outputDirectory>${project.basedir}/lib</outputDirectory>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- DLL cho đăng nhập Windows Authentication (integratedSecurity) -->
+                    <jvmArguments>-Djava.library.path=lib -Dfile.encoding=UTF-8</jvmArguments>
+                    <profiles>dev</profiles>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

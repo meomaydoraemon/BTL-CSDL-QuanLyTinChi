@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- Trạng thái rỗng: icon + tiêu đề + câu hướng dẫn -->
+<div th:fragment="empty(icon, title, text)" class="empty">
+    <div class="empty-icon"><i class="bi" th:classappend="${icon}"></i></div>
+    <h3 th:text="${title}">Chưa có dữ liệu</h3>
+    <p th:text="${text}">Hướng dẫn</p>
+</div>
+
+<!-- Ô chọn học kỳ, tự chuyển trang khi đổi -->
+<form th:fragment="chonHocKy(dsHocKy, hk)" method="get" class="d-flex align-items-center gap-2">
+    <label for="hkSelect" class="text-muted-x small text-nowrap">Học kỳ</label>
+    <select id="hkSelect" name="hk" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 0">
+        <option th:each="h : ${dsHocKy}" th:value="${h.MaHK}" th:selected="${h.MaHK == hk.MaHK}"
+                th:text="${h.TenHK}">HK</option>
+    </select>
+</form>
+
+<!-- Hộp thoại "Xem SQL": tên + loại + 1 dòng giải thích các đối tượng SQL trang đang dùng -->
+<div th:fragment="sqlModal(dsSql, tenTrang)" class="modal fade" id="modalSql" tabindex="-1" aria-labelledby="tieuDeSql" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+        <div class="modal-content modal-x">
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title" id="tieuDeSql"><i class="bi bi-code-slash me-2" style="color: var(--ptit)"></i>SQL của trang</h5>
+                    <div class="cell-sub" th:text="${tenTrang} + ' · ' + ${dsSql.size()} + ' đối tượng trong CSDL QuanLyTinChi'"></div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body p-0">
+                <ul class="sql-list">
+                    <li th:each="d : ${dsSql}">
+                        <span class="tag no-dot" th:classappend="${d.mau()}" th:text="${d.loai}">Thủ tục</span>
+                        <div>
+                            <code class="sql-name" th:text="${d.ten}">sp_DangKyHocPhan</code>
+                            <div class="sql-desc" th:text="${d.moTa}">mô tả</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Điểm chữ dạng tag màu: A xanh lá, B xanh dương, C cam, D cam đậm, F đỏ -->
+<span th:fragment="grade(diemChu)" class="grade"
+      th:classappend="${diemChu == null} ? 'grade-none' : 'grade-' + ${#strings.substring(diemChu, 0, 1)}"
+      th:text="${diemChu ?: '—'}">A</span>
+
+</body>
+</html>

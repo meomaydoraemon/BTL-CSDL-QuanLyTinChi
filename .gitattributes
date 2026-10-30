@@ -1,0 +1,12 @@
+# Script Windows phải giữ xuống dòng CRLF, nếu không cmd / PowerShell có thể chạy sai
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
+*.sql   text eol=crlf
+# Script Maven Wrapper cho Linux/macOS
+mvnw    text eol=lf
+# File nhị phân
+*.ico   binary
+*.png   binary
+*.dll   binary
+*.jar   binary

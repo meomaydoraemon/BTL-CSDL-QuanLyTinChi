@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Tổng quan đào tạo', ~{::#content}, ~{::script})}">
+<head><title>Tổng quan · PTIT</title></head>
+<body>
+<div id="content">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <div class="text-muted-x small">Số liệu đăng ký của <b class="text-body" th:text="${hk.TenHK}"></b></div>
+        <div class="ms-auto" th:insert="~{fragments :: chonHocKy(${dsHocKy}, ${hk})}"></div>
+    </div>
+
+    <!-- 4 thẻ số liệu -->
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-xl-3">
+            <div class="card-x stat">
+                <div class="stat-icon i-red"><i class="bi bi-people"></i></div>
+                <div>
+                    <div class="stat-label">Tổng sinh viên</div>
+                    <div class="stat-value" th:text="${#numbers.formatInteger(so.TongSV, 1, 'POINT')}">300</div>
+                    <div class="stat-sub" th:text="${so.SoSVDaDK} + ' SV đã đăng ký kỳ này'"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="card-x stat">
+                <div class="stat-icon i-blue"><i class="bi bi-collection"></i></div>
+                <div>
+                    <div class="stat-label">Lớp học phần mở</div>
+                    <div class="stat-value" th:text="${so.SoLop}">20</div>
+                    <div class="stat-sub">trong học kỳ đang xem</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="card-x stat">
+                <div class="stat-icon i-green"><i class="bi bi-journal-check"></i></div>
+                <div>
+                    <div class="stat-label">Lượt đăng ký</div>
+                    <div class="stat-value" th:text="${#numbers.formatInteger(so.LuotDK, 1, 'POINT')}">500</div>
+                    <div class="stat-sub">tổng số lượt trong kỳ</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-xl-3">
+            <div class="card-x stat">
+                <div class="stat-icon i-amber"><i class="bi bi-pie-chart"></i></div>
+                <div>
+                    <div class="stat-label">Tỷ lệ lớp đầy</div>
+                    <div class="stat-value" th:text="${tyLeLopDay} + '%'">5%</div>
+                    <div class="stat-sub" th:text="${so.SoLopDay} + '/' + ${so.SoLop} + ' lớp đã đủ sĩ số'"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Biểu đồ -->
+    <div class="row g-3 mb-3">
+        <div class="col-lg-5">
+            <div class="card-x h-100">
+                <div class="card-head"><h2>Phân bố điểm chữ</h2><span class="cell-sub ms-auto">Toàn bộ các kỳ</span></div>
+                <div class="card-pad" style="height: 320px"><canvas id="chartDiemChu" aria-label="Biểu đồ phân bố điểm chữ" role="img"></canvas></div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card-x h-100">
+                <div class="card-head"><h2>Tỷ lệ đạt theo môn</h2><span class="cell-sub ms-auto">% sinh viên có điểm tổng kết ≥ 4.0</span></div>
+                <div class="card-pad" style="height: 320px">
+                    <canvas th:if="${!tyLeDat.isEmpty()}" id="chartTyLeDat" aria-label="Biểu đồ tỷ lệ đạt theo môn" role="img"></canvas>
+                    <th:block th:if="${tyLeDat.isEmpty()}">
+                        <div th:replace="~{fragments :: empty('bi-bar-chart', 'Chưa có điểm để thống kê', 'Biểu đồ sẽ hiện khi giảng viên nhập điểm.')}"></div>
+                    </th:block>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lớp đông nhất -->
+    <div class="card-x">
+        <div class="card-head">
+            <h2>Lớp gần đầy nhất</h2>
+            <a th:href="@{/pdt/lop(hk=${hk.MaHK})}" class="ms-auto small text-decoration-none">Xem tất cả lớp <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <th:block th:if="${lopNong.isEmpty()}">
+            <div th:replace="~{fragments :: empty('bi-collection', 'Học kỳ này chưa mở lớp', 'Mở lớp học phần cho học kỳ để theo dõi sĩ số tại đây.')}"></div>
+        </th:block>
+        <div class="table-responsive" th:if="${!lopNong.isEmpty()}">
+            <table class="table table-x">
+                <thead><tr><th>Lớp</th><th>Môn học</th><th>Giảng viên</th><th style="min-width: 200px">Sĩ số</th></tr></thead>
+                <tbody>
+                <tr th:each="l : ${lopNong}">
+                    <td class="mono" th:text="${l.MaLHP}"></td>
+                    <td class="fw-semibold" th:text="${l.TenMH}"></td>
+                    <td th:text="${l.TenGV}"></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 6px">
+                                <div class="progress-bar" th:style="'width:' + ${l.PhanTram} + '%'"
+                                     th:classappend="${l.PhanTram >= 100} ? 'bg-secondary'"></div>
+                            </div>
+                            <span class="small text-nowrap" th:text="${l.SiSoHienTai} + '/' + ${l.SiSoToiDa}"></span>
+                        </div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script th:inline="javascript">
+    (function () {
+        const diemChu = /*[[${diemChu}]]*/ [];
+        const tyLeDat = /*[[${tyLeDat}]]*/ [];
+        Chart.defaults.font.family = '"Be Vietnam Pro", system-ui, sans-serif';
+        Chart.defaults.color = '#6B7280';
+
+        // Màu theo nhóm điểm: A xanh lá, B xanh dương, C cam, D cam đậm, F đỏ
+        const mau = { A: '#16A34A', B: '#2563EB', C: '#F59E0B', D: '#EA580C', F: '#C8102E' };
+        new Chart(document.getElementById('chartDiemChu'), {
+            type: 'bar',
+            data: {
+                labels: diemChu.map(d => d.DiemChu),
+                datasets: [{
+                    data: diemChu.map(d => d.SoLuong),
+                    backgroundColor: diemChu.map(d => mau[d.DiemChu[0]]),
+                    borderRadius: 6, maxBarThickness: 36
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.y + ' lượt' } } },
+                scales: { x: { grid: { display: false } }, y: { grid: { color: '#EEF0F3' }, border: { display: false } } }
+            }
+        });
+
+        const el = document.getElementById('chartTyLeDat');
+        if (el) {
+            new Chart(el, {
+                type: 'bar',
+                data: {
+                    labels: tyLeDat.map(d => d.TenMH),
+                    datasets: [{
+                        data: tyLeDat.map(d => d.TyLeDat),
+                        backgroundColor: tyLeDat.map(d => d.TyLeDat < 90 ? '#C8102E' : '#E8768A'),
+                        borderRadius: 6, maxBarThickness: 18
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x + '% đạt' } } },
+                    scales: {
+                        x: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#EEF0F3' }, border: { display: false } },
+                        y: { grid: { display: false }, ticks: { autoSkip: false, font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+    })();
+</script>
+</body>
+</html>

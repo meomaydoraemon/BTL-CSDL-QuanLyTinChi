@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, 'Lớp học phần', ~{::#content}, ~{::script})}">
+<head><title>Lớp học phần · PTIT</title></head>
+<body>
+<div id="content">
+    <div class="card-x">
+        <div class="card-head">
+            <h2 data-refresh="so-lop" th:text="${lop.size()} + ' lớp · ' + ${hk.TenHK}">Lớp học phần</h2>
+            <div class="d-flex flex-wrap gap-2 ms-auto align-items-center">
+                <div class="search-box" style="min-width: 240px">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="timKiem" class="form-control form-control-sm" placeholder="Tìm mã lớp, môn, giảng viên..." aria-label="Tìm lớp">
+                </div>
+                <div th:insert="~{fragments :: chonHocKy(${dsHocKy}, ${hk})}"></div>
+                <button type="button" class="btn btn-sm btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#modalMoLop">
+                    <i class="bi bi-plus-lg me-1"></i>Mở lớp</button>
+            </div>
+        </div>
+
+        <div data-refresh="bang-lop">
+            <th:block th:if="${lop.isEmpty()}">
+                <div th:replace="~{fragments :: empty('bi-collection', 'Học kỳ này chưa mở lớp nào', 'Chọn học kỳ khác ở ô phía trên, hoặc bấm nút Mở lớp để tạo lớp mới.')}"></div>
+            </th:block>
+
+            <div class="table-responsive" th:if="${!lop.isEmpty()}">
+                <table class="table table-x" id="bangLop">
+                    <thead>
+                    <tr>
+                        <th>Môn học / Lớp</th>
+                        <th>Giảng viên</th>
+                        <th>Lịch học</th>
+                        <th class="text-center">Sĩ số</th>
+                        <th>Tình trạng</th>
+                        <th class="text-center">Tỷ lệ đạt</th>
+                        <th class="text-end">Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r : ${lop}" th:attr="data-tim=${#strings.toLowerCase(r.MaLHP + ' ' + r.TenMH + ' ' + r.TenGV)}">
+                        <td style="min-width: 200px">
+                            <div class="fw-semibold" th:text="${r.TenMH}"></div>
+                            <div class="cell-sub text-nowrap"><span class="mono" th:text="${r.MaLHP}"></span>
+                                · <span th:text="${r.SoTinChi} + ' TC'"></span></div>
+                        </td>
+                        <td class="text-nowrap" th:text="${r.TenGV}"></td>
+                        <td class="small" style="min-width: 170px">
+                            <div class="text-nowrap" th:each="buoi : ${r.LichHoc != null ? r.LichHoc.split('; ') : {}}" th:text="${#strings.replace(#strings.replace(buoi, ', phòng ', ' · '), ', tiết ', ' · tiết ')}"></div>
+                            <span th:if="${r.LichHoc == null}" class="tag tag-warn">Chưa xếp lịch</span>
+                        </td>
+                        <td class="text-center text-nowrap" th:text="${r.SiSoHienTai} + '/' + ${r.SiSoToiDa}"></td>
+                        <td>
+                            <span th:if="${r.ChoTrong <= 0}" class="tag tag-gray">Đã đầy</span>
+                            <span th:if="${r.ChoTrong > 0}" class="tag tag-ok" th:text="'Còn ' + ${r.ChoTrong} + ' chỗ'"></span>
+                        </td>
+                        <td class="text-center" th:text="${r.TyLeDat != null} ? ${#numbers.formatDecimal(r.TyLeDat, 1, 1, 'POINT')} + '%' : '—'"></td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-sm btn-outline-ptit text-nowrap js-xep-lich"
+                                    th:attr="data-lhp=${r.MaLHP},data-ten=${r.TenMH},data-gv=${r.TenGV}">
+                                <i class="bi bi-calendar-plus me-1"></i>Xếp lịch</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <div class="d-none" data-khong-khop>
+                    <div th:replace="~{fragments :: empty('bi-search', 'Không tìm thấy lớp phù hợp', 'Thử từ khóa khác như mã lớp, tên môn hoặc tên giảng viên.')}"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hộp thoại mở lớp: gọi sp_TaoLopHocPhan -->
+    <div class="modal fade" id="modalMoLop" tabindex="-1" aria-labelledby="tieuDeMoLop" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content modal-x" id="formMoLop">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="tieuDeMoLop">Mở lớp học phần</h5>
+                        <div class="cell-sub" th:text="${hk.TenHK}"></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="maHK" th:value="${hk.MaHK}">
+                    <div class="mb-3">
+                        <label for="moMon" class="form-label fw-medium">Môn học</label>
+                        <select id="moMon" name="maMH" class="form-select" required>
+                            <option value="" selected disabled>Chọn môn học...</option>
+                            <option th:each="m : ${dsMon}" th:value="${m.MaMH}"
+                                    th:text="${m.TenMH} + ' (' + ${m.MaMH} + ', ' + ${m.SoTinChi} + ' TC)'"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="moGV" class="form-label fw-medium">Giảng viên phụ trách</label>
+                        <select id="moGV" name="maGV" class="form-select" required>
+                            <option value="" selected disabled>Chọn giảng viên...</option>
+                            <option th:each="g : ${dsGV}" th:value="${g.MaGV}"
+                                    th:text="${g.HocVi} + ' ' + ${g.HoTen} + ' (' + ${g.MaGV} + ')'"></option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="moSiSo" class="form-label fw-medium">Sĩ số tối đa</label>
+                        <input id="moSiSo" type="number" name="siSoToiDa" class="form-control" value="60" min="1" max="500" required>
+                    </div>
+                    <div class="form-text mt-3"><i class="bi bi-info-circle me-1"></i>Số nhóm và mã lớp (VD: INT1313-20262-04) do thủ tục tự sinh.</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Mở lớp</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hộp thoại xếp lịch: gọi sp_ThemLichHoc, trigger trg_LichHoc_KiemTraTrung kiểm tra trùng -->
+    <div class="modal fade" id="modalXepLich" tabindex="-1" aria-labelledby="tieuDeXepLich" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <form class="modal-content modal-x" id="formXepLich">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="tieuDeXepLich">Xếp lịch học</h5>
+                        <div class="cell-sub" id="xlThongTin"></div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="maLHP" id="xlMaLHP">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <label for="xlThu" class="form-label fw-medium">Thứ</label>
+                            <select id="xlThu" name="thu" class="form-select" required>
+                                <option th:each="t : ${#numbers.sequence(2, 8)}" th:value="${t}"
+                                        th:text="${t == 8} ? 'Chủ nhật' : 'Thứ ' + ${t}"></option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="xlPhong" class="form-label fw-medium">Phòng</label>
+                            <input id="xlPhong" type="text" name="phong" class="form-control" placeholder="VD: A2-301" maxlength="20" required>
+                        </div>
+                        <div class="col-6">
+                            <label for="xlTiet" class="form-label fw-medium">Tiết bắt đầu</label>
+                            <select id="xlTiet" name="tietBatDau" class="form-select" required>
+                                <option th:each="t : ${#numbers.sequence(1, 12)}" th:value="${t}" th:text="'Tiết ' + ${t}"></option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label for="xlSoTiet" class="form-label fw-medium">Số tiết</label>
+                            <select id="xlSoTiet" name="soTiet" class="form-select" required>
+                                <option th:each="t : ${#numbers.sequence(1, 6)}" th:value="${t}" th:text="${t} + ' tiết'" th:selected="${t == 3}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-text mt-3" id="xlKetThuc"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-calendar-check me-1"></i>Xếp lịch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    (function () {
+        const o = document.getElementById('timKiem');
+        const khongDau = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+        const loc = () => {
+            const q = khongDau(o.value.trim().toLowerCase());
+            let hien = 0;
+            document.querySelectorAll('#bangLop tbody tr').forEach(tr => {
+                const ok = !q || khongDau(tr.dataset.tim).includes(q);
+                tr.classList.toggle('d-none', !ok);
+                if (ok) hien++;
+            });
+            const bang = document.getElementById('bangLop');
+            if (bang) {
+                bang.classList.toggle('d-none', hien === 0);
+                document.querySelector('[data-khong-khop]').classList.toggle('d-none', hien > 0);
+            }
+        };
+        o.addEventListener('input', loc);
+        document.addEventListener('regions-refreshed', loc);
+
+        // Gửi form trong hộp thoại; lỗi thì giữ hộp thoại mở để sửa, thành công thì đóng và tải lại bảng
+        async function guiForm(form, url) {
+            const nut = form.querySelector('[type=submit]');
+            nut.disabled = true;
+            const kq = await postForm(url, Object.fromEntries(new FormData(form)));
+            nut.disabled = false;
+            toast(kq.ok, kq.message);
+            if (!kq.ok) return;
+            bootstrap.Modal.getInstance(form.closest('.modal')).hide();
+            await refreshRegions();
+            if (kq.maLHP) {
+                const tr = document.querySelector('.js-xep-lich[data-lhp="' + kq.maLHP + '"]')?.closest('tr');
+                if (tr) { tr.scrollIntoView({ block: 'center' }); tr.classList.add('row-saved'); }
+            }
+        }
+
+        const formMoLop = document.getElementById('formMoLop');
+        formMoLop.addEventListener('submit', e => { e.preventDefault(); guiForm(formMoLop, '/pdt/lop/mo'); });
+
+        const formXepLich = document.getElementById('formXepLich');
+        const modalXepLich = new bootstrap.Modal('#modalXepLich');
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.js-xep-lich');
+            if (!btn) return;
+            document.getElementById('xlMaLHP').value = btn.dataset.lhp;
+            document.getElementById('xlThongTin').textContent = btn.dataset.lhp + ' · ' + btn.dataset.ten + ' · ' + btn.dataset.gv;
+            capNhatKetThuc();
+            modalXepLich.show();
+        });
+
+        // Hiện tiết kết thúc để thấy ngay buổi học có vượt tiết 12 không
+        function capNhatKetThuc() {
+            const bd = +document.getElementById('xlTiet').value, so = +document.getElementById('xlSoTiet').value;
+            const kt = bd + so - 1;
+            document.getElementById('xlKetThuc').innerHTML = kt > 12
+                ? '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Buổi học vượt quá tiết 12 (kết thúc tiết ' + kt + ').</span>'
+                : '<i class="bi bi-clock me-1"></i>Học từ tiết ' + bd + ' đến tiết ' + kt + '.';
+        }
+        document.getElementById('xlTiet').addEventListener('change', capNhatKetThuc);
+        document.getElementById('xlSoTiet').addEventListener('change', capNhatKetThuc);
+        formXepLich.addEventListener('submit', e => { e.preventDefault(); guiForm(formXepLich, '/pdt/lop/lich'); });
+    })();
+</script>
+</body>
+</html>
